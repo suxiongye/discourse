@@ -1549,6 +1549,48 @@ RSpec.describe User do
     end
   end
 
+  describe "username_lower normalization" do
+    it "finds a single user by username" do
+      bob = Fabricate(:user, username: "bob")
+      expect(User.where(username_lower: "bob").first).to eq(bob)
+      expect(User.where(username_lower: "Bob").first).to eq(bob)
+      expect(User.where(username_lower: "BOB").first).to eq(bob)
+    end
+
+    it "finds multiple users by usernames" do
+      bob = Fabricate(:user, username: "bob")
+      alice = Fabricate(:user, username: "alice")
+      expect(User.where(username_lower: %w[bob alice])).to contain_exactly(bob, alice)
+      expect(User.where(username_lower: %w[Bob Alice])).to contain_exactly(bob, alice)
+    end
+
+    it "finds users with Unicode usernames" do
+      SiteSetting.unicode_usernames = true
+      user = Fabricate(:user, username: "löwe")
+
+      expect(User.where(username_lower: "LÖWE").first).to eq(user)
+      expect(User.where(username_lower: "LO\u0308WE").first).to eq(user)
+      expect(User.where(username_lower: "lo\u0308we").first).to eq(user)
+    end
+
+    it "finds multiple users with Unicode usernames" do
+      SiteSetting.unicode_usernames = true
+      user1 = Fabricate(:user, username: "löwe")
+      user2 = Fabricate(:user, username: "bär")
+
+      expect(User.where(username_lower: %w[löwe bär])).to contain_exactly(user1, user2)
+      expect(User.where(username_lower: ["LO\u0308WE", "BA\u0308R"])).to contain_exactly(
+        user1,
+        user2,
+      )
+    end
+
+    it "returns empty relation when no users match" do
+      expect(User.where(username_lower: "nonexistent")).to be_empty
+      expect(User.where(username_lower: %w[foo bar])).to be_empty
+    end
+  end
+
   describe "#new_user_posting_on_first_day?" do
     def create_test_user(opts = {})
       Fabricate(:user, { created_at: Time.zone.now }.merge(opts))
