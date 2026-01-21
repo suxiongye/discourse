@@ -171,8 +171,8 @@ class User < ActiveRecord::Base
   after_initialize :add_trust_level
 
   before_validation :set_skip_validate_email
-  before_validation { self.username_lower = username }
 
+  before_save { self.username_lower = username }
   before_save :match_primary_group_changes
   before_save :check_if_title_is_badged_granted
   before_save :apply_watched_words, unless: :should_skip_user_fields_validation?
