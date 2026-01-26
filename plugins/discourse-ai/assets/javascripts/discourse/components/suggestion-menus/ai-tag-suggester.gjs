@@ -91,7 +91,7 @@ export default class AiTagSuggester extends Component {
 
       if (this.#tagSelectorHasValues()) {
         this.suggestions = this.suggestions.filter(
-          (s) => !model.get("tags").includes(s.name)
+          (s) => !model.get("tags").some((t) => t.id === s.id)
         );
       }
 
@@ -132,7 +132,7 @@ export default class AiTagSuggester extends Component {
     const tags = model.get("tags");
 
     if (!tags) {
-      model.set("tags", [suggestion.name]);
+      model.set("tags", [suggestion]);
       this.#removedAppliedTag(suggestion);
       return;
     }
@@ -149,7 +149,7 @@ export default class AiTagSuggester extends Component {
       });
     }
 
-    tags.push(suggestion.name);
+    tags.push(suggestion);
     model.set("tags", [...tags]);
     suggestion.disabled = true;
     this.#removedAppliedTag(suggestion);
