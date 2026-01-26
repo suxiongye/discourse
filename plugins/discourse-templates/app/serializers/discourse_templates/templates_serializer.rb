@@ -13,7 +13,7 @@ module DiscourseTemplates
     end
 
     def tags
-      object.tags.sort_by(&:name).map { |tag| { id: tag.id, name: tag.name, slug: tag.name } }
+      object.tags.map(&:name).sort
     end
 
     def usages

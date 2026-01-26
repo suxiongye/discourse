@@ -22,9 +22,7 @@ describe DiscourseTemplates::TemplatesSerializer do
       expect(json[:title]).to eq(template_item.title)
       expect(json[:slug]).to eq(template_item.slug)
       expect(json[:content]).to eq(template_item.first_post.raw)
-      expect(json[:tags]).to match_array(
-        template_item.tags.map { |tag| { id: tag.id, name: tag.name, slug: tag.name } },
-      )
+      expect(json[:tags]).to match_array(template_item.tags.map(&:name))
       expect(json[:usages]).to eq(0)
     end
 

@@ -22,22 +22,6 @@ module PageObjects
       def select_template(id)
         find("#template-item-#{id} .templates-apply").click
       end
-
-      def tag_drop
-        PageObjects::Components::SelectKit.new("#{MODAL_SELECTOR} .tag-drop")
-      end
-
-      def has_template?(template)
-        has_css?("#template-item-#{template.id}")
-      end
-
-      def has_no_template?(template)
-        has_no_css?("#template-item-#{template.id}")
-      end
-
-      def template_count
-        all("#{MODAL_SELECTOR} .template-item").count
-      end
     end
   end
 end
