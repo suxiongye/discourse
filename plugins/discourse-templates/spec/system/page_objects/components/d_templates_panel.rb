@@ -1,30 +1,30 @@
 # frozen_string_literal: true
 
 module PageObjects
-  module Modals
-    class DTemplatesInsertTemplate < PageObjects::Modals::Base
+  module Components
+    class DTemplatesPanel < PageObjects::Components::Base
       include SystemHelpers
 
-      MODAL_SELECTOR = ".d-templates-modal"
+      PANEL_SELECTOR = ".d-templates-container"
 
       def open_with_keyboard_shortcut
         send_keys([PLATFORM_KEY_MODIFIER, :shift, "i"])
       end
 
       def open?
-        super && finished_loading?
+        has_css?(PANEL_SELECTOR) && finished_loading?
       end
 
       def finished_loading?
-        has_no_css?("#{MODAL_SELECTOR} .spinner")
+        has_no_css?("#{PANEL_SELECTOR} .spinner")
       end
 
-      def select_template(id)
-        find("#template-item-#{id} .templates-apply").click
+      def select_template(template)
+        find("#template-item-#{template.id} .templates-apply").click
       end
 
       def tag_drop
-        PageObjects::Components::SelectKit.new("#{MODAL_SELECTOR} .tag-drop")
+        PageObjects::Components::SelectKit.new("#{PANEL_SELECTOR} .tag-drop")
       end
 
       def has_template?(template)
@@ -36,7 +36,7 @@ module PageObjects
       end
 
       def template_count
-        all("#{MODAL_SELECTOR} .template-item").count
+        all("#{PANEL_SELECTOR} .template-item").count
       end
     end
   end

@@ -36,11 +36,12 @@ export default class DTemplatesFilterableList extends Component {
     }
 
     if (this.selectedTag === NO_TAG_ID) {
-      return { name: NO_TAG_ID };
+      return { id: NO_TAG_ID, name: NO_TAG_ID };
     }
 
     return (
       this.availableTags.find((tag) => tag.id === this.selectedTag) || {
+        id: this.selectedTag,
         name: this.selectedTag,
       }
     );
@@ -72,7 +73,9 @@ export default class DTemplatesFilterableList extends Component {
             return true;
           }
 
-          return template.tags.includes(this.selectedTag);
+          return template.tags.some(
+            (tag) => (tag.id ?? tag) === this.selectedTag
+          );
         })
         .sort((a, b) => {
           /* Sort replies by relevance, usage, and title. */
@@ -100,10 +103,12 @@ export default class DTemplatesFilterableList extends Component {
         this.availableTags = Object.values(
           this.replies.reduce((availableTags, template) => {
             template.tags.forEach((tag) => {
-              if (availableTags[tag]) {
-                availableTags[tag].count += 1;
+              const tagId = tag.id ?? tag;
+              const tagName = tag.name ?? tag;
+              if (availableTags[tagId]) {
+                availableTags[tagId].count += 1;
               } else {
-                availableTags[tag] = { id: tag, name: tag, count: 1 };
+                availableTags[tagId] = { id: tagId, name: tagName, count: 1 };
               }
             });
 
