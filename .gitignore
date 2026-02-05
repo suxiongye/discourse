@@ -29,6 +29,7 @@
 
 # Plugins except for the bundled ones
 /plugins/*
+!/plugins/discourse-tai-hu-auth
 !/plugins/discourse-details
 !/plugins/discourse-local-dates
 !/plugins/discourse-narrative-bot
@@ -129,3 +130,4 @@ frontend/discourse-types/declarations
 # AI customization
 /.claude
 /.cursor
+ssl

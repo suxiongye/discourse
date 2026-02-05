@@ -1,0 +1,22 @@
+# WARNING: Never edit this file.
+# It will be overwritten when translations are pulled from Crowdin.
+#
+# To work with us on translations, join this project:
+# https://translate.discourse.org/
+
+ro:
+  theme_metadata:
+    settings:
+      small_links:
+        schema:
+          properties:
+            css_class:
+              label: Clasă CSS
+              description: Clasă CSS suplimentară opțională de aplicat legăturii (de exemplu, „clasă-personalizată”)
+      social_links:
+        schema:
+          properties:
+            icon_name:
+              description: Nume icon FontAwesome 6 (iconurile de marcă au nevoie de prefixul „fab-”)
+      svg_icons:
+        description: "Lista iconurilor FontAwesome 6 utilizate în setarea legăturilor sociale de mai sus."

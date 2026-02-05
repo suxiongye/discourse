@@ -1,0 +1,15 @@
+en:
+  table_of_contents: table of contents
+  insert_table_of_contents: Insert table of contents
+  jump_bottom: Jump to end
+  toggle_toc:
+    show_timeline: Timeline
+    show_toc: Contents
+  theme_metadata:
+    settings:
+      minimum_trust_level_to_create_TOC: The minimum trust level a user must have in order to see the TOC button in the composer
+      composer_toc_text: Text that appears at the top of the preview pane of the composer to indicate the topic will have a table of contents
+      auto_TOC_categories: Automatically enable TOC on topics in these categories
+      auto_TOC_tags: Automatically enable TOC on topics with these tags
+      TOC_min_heading: Minimum number of headings in a topic for the table of contents to be shown
+      enable_TOC_for_replies: Allows TOC for replies. TOCs for replies are not affected by the <b>auto TOC tags</b> and <b>auto TOC categories</b> settings and must be inserted manually.

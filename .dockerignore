@@ -1,0 +1,56 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# 文档
+# *.md
+# docs/  # 不要排除 docs/，某些功能需要
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+AI-AGENTS.md
+README.md
+CONTRIBUTING.md
+COPYRIGHT.md
+LICENSE.txt
+
+# 开发环境
+.vscode/
+.idea/
+*.sublime-*
+
+# 日志和临时文件
+log/*
+tmp/*
+.codebuddy/
+
+# 测试文件
+spec/
+test/
+.rspec
+
+# Node modules（会重新安装）
+node_modules/
+
+# 环境配置
+.env
+.env.*
+config/database.yml
+config/redis.yml
+
+# 构建产物（会重新生成）
+public/assets/
+public/uploads/*
+public/backups/*
+
+# 开发工具
+bin/docker/
+# script/  # 生产环境需要 script/ 目录
+d/
+
+# 其他
+vendor/bundle/
+.bundle/
+coverage/
+.DS_Store

@@ -1,0 +1,7 @@
+zh_CN:
+  site_settings:
+    tai_hu_auth_enabled: "启用太湖（IOA）身份认证"
+    tai_hu_token_key: "太湖 JWE token 解密密钥"
+    tai_hu_auto_create_user: "自动创建太湖认证的用户"
+    tai_hu_email_domain: "自动创建用户时使用的邮箱域名"
+    tai_hu_auto_activate_user: "自动激活新用户（跳过邮箱验证）"

@@ -1,0 +1,76 @@
+en:
+  theme_metadata:
+    settings:
+      heading:
+        description: "Text for the heading in the footer - you can use your site name for example - Max length 25 characters"
+      blurb:
+        description: "Enter a short blurb about your community - Max length 180 characters"
+      sections:
+        description: "Sections to be displayed in the footer"
+        schema:
+          properties:
+            text:
+              label: Text
+              description: Text to be displayed for the section
+            title:
+              label: Title
+              description: The title attribute of the section
+            links:
+              text:
+                label: Text
+                description: Text to be displayed for the link
+              url:
+                label: URL
+                description: The URL the link points to
+              target:
+                label: Target
+                description: The target attribute of the link
+              title:
+                label: Title
+                description: The title attribute of the link
+              referrer_policy:
+                label: Referrer Policy
+                description: The referrerpolicy attribute of the link
+
+      small_links:
+        description: "Small links at the bottom of the footer like Terms of Service and Privacy"
+        schema:
+          properties:
+            text:
+              label: Text
+              description: Text to be displayed for the link
+            url:
+              label: URL
+              description: The URL the link points to
+            target:
+              label: Target
+              description: The target attribute of the link
+            css_class:
+              label: CSS Class
+              description: Optional additional CSS class to apply to the link (e.g., 'custom-class')
+
+      social_links:
+        description: "Social links you'd like to add to the footer"
+        schema:
+          properties:
+            text:
+              label: Text
+              description: Text to be displayed for the link
+            title:
+              label: Title
+              description: The title attribute of the link
+            url:
+              label: URL
+              description: The URL the link points to
+            target:
+              label: Target
+              description: The target attribute of the link
+            icon_name:
+              label: Icon Name
+              description: FontAwesome 6 icon name (brand icons need a 'fab-' prefix)
+
+      show_footer_on_login_required_page:
+        description: "Check this setting if you want the footer to be displayed on the login-required page (only applies if your site is private)"
+      svg_icons:
+        description: "List of FontAwesome 6 icons used in the social links setting above."
+

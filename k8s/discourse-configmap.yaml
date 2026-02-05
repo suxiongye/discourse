@@ -1,0 +1,86 @@
+apiVersion: v1
+data:
+  DISCOURSE_DEV_HOSTS: 9.135.99.230
+  DISCOURSE_DEVELOPER_EMAILS: admin@example.com
+  DISCOURSE_HOSTNAME: orcaspace.woa.com
+  DISCOURSE_REDIS_HOST: redis-service
+  DISCOURSE_REDIS_PASSWORD: Tshjl!123
+  DISCOURSE_REDIS_PORT: "6379"
+  DISCOURSE_SERVE_STATIC_ASSETS: "true"
+  # HTTPS 配置
+  DISCOURSE_FORCE_HTTPS: "true"
+  RAILS_ASSUME_SSL: "true"
+  # CORS 配置（如果需要）
+  DISCOURSE_ENABLE_CORS: "true"
+  DISCOURSE_CORS_ORIGIN: 'https://orcaspace.woa.com'
+  # 代理配置 - 确保正确识别客户端 IP 和协议
+  DISCOURSE_TRUSTED_PROXIES: '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16'
+  # Cookie 和 Session 配置 - IOA 登录修复的关键
+  # 不设置 COOKIE_DOMAIN，让 Discourse 自动使用请求的域名
+  # DISCOURSE_COOKIE_DOMAIN: ''
+  # Redis 配置
+  DISCOURSE_REDIS_SKIP_CLIENT_COMMANDS: "true"
+  # 调试选项（临时开启，排查 session 问题）
+  DISCOURSE_DEBUG_SESSION: "true"
+  # 如果需要支持跨站点认证（IOA 在不同域名）
+  DISCOURSE_SAMESITE_NONE: "true"
+  DISCOURSE_SMTP_ADDRESS: ""
+  DISCOURSE_SMTP_PORT: ""
+  RACK_ENV: production
+  RAILS_ENV: production
+  SECRET_KEY_BASE: production_secret_key_base_min_30_chars_long_replace_this
+  # 太湖身份认证插件配置
+  DISCOURSE_TAI_HU_AUTH_ENABLED: "true"
+  DISCOURSE_TAI_HU_TOKEN_KEY: ""
+  DISCOURSE_TAI_HU_AUTO_CREATE_USER: "true"
+  DISCOURSE_TAI_HU_EMAIL_DOMAIN: "tencent.com"
+  DISCOURSE_TAI_HU_AUTO_ACTIVATE_USER: "true"
+  # COS 对象存储配置
+  DISCOURSE_ENABLE_S3_UPLOADS: "true"
+  DISCOURSE_S3_REGION: "ap-guangzhou"
+  DISCOURSE_S3_BUCKET: "orcaspace-1255940152"
+  DISCOURSE_S3_UPLOAD_BUCKET: "orcaspace-1255940152"
+  DISCOURSE_S3_ENDPOINT: "https://cos.ap-guangzhou.myqcloud.com"
+ # Git 和请求超时配置
+  UNICORN_TIMEOUT: "180"
+  DISCOURSE_REQUEST_TIMEOUT: "180"
+  DISCOURSE_GIT_TIMEOUT: "300"
+  # 限流配置 - 禁用或放宽限流
+  # 可选值: none(禁用), warn(仅警告), block(阻断), warn+block(警告并阻断)
+  DISCOURSE_MAX_REQS_PER_IP_MODE: "none"
+  # 或者保持阻断但提高阈值:
+  # DISCOURSE_MAX_REQS_PER_IP_PER_MINUTE: "10000"
+  # DISCOURSE_MAX_REQS_PER_IP_PER_10_SECONDS: "2000"
+  # DISCOURSE_MAX_ASSET_REQS_PER_IP_PER_10_SECONDS: "5000"
+  # 跳过私有 IP 的限流（如内网环境）
+  DISCOURSE_MAX_REQS_RATE_LIMIT_ON_PRIVATE: "false"
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2026-01-30T07:54:45Z"
+  managedFields:
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:data:
+        .: {}
+        f:DATABASE_URL: {}
+        f:DISCOURSE_DEV_HOSTS: {}
+        f:DISCOURSE_DEVELOPER_EMAILS: {}
+        f:DISCOURSE_HOSTNAME: {}
+        f:DISCOURSE_REDIS_HOST: {}
+        f:DISCOURSE_REDIS_PASSWORD: {}
+        f:DISCOURSE_REDIS_PORT: {}
+        f:DISCOURSE_SERVE_STATIC_ASSETS: {}
+        f:DISCOURSE_SMTP_ADDRESS: {}
+        f:DISCOURSE_SMTP_PORT: {}
+        f:RACK_ENV: {}
+        f:RAILS_ENV: {}
+        f:SECRET_KEY_BASE: {}
+    manager: tke-platform-api
+    operation: Update
+    time: "2026-01-31T16:18:02Z"
+  name: discourse-env
+  namespace: orca
+  resourceVersion: "81973435991"
+  selfLink: /api/v1/namespaces/orca/configmaps/discourse-env
+  uid: 7fbd020c-90c9-45da-9635-8bfa629bf1ed

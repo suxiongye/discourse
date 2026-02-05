@@ -78,7 +78,12 @@ class S3Helper
           obj.load
           obj.etag
         else
-          options[:body] = file
+          # 腾讯云 COS 要求 Content-MD5 头
+          file.rewind if file.respond_to?(:rewind)
+          body = file.respond_to?(:read) ? file.read : file
+          file.rewind if file.respond_to?(:rewind)
+          options[:body] = body
+          options[:content_md5] = Base64.strict_encode64(Digest::MD5.digest(body))
           obj.put(options).etag
         end
       end

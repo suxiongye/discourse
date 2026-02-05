@@ -1,0 +1,15 @@
+{
+  "name": "discourse-tai-hu-auth",
+  "version": "1.0.0",
+  "description": "Tencent Tai Hu (IOA) authentication plugin for Discourse",
+  "author": "Tencent Cloud Product Team",
+  "license": "MIT",
+  "keywords": [
+    "discourse",
+    "plugin",
+    "authentication",
+    "tai-hu",
+    "ioa",
+    "tencent"
+  ]
+}

@@ -1,0 +1,5 @@
+@use "sass:color";
+
+:root {
+  --material-lighter-secondary: color.adjust($secondary, $lightness: 10%);
+}

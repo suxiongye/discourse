@@ -1,0 +1,19 @@
+plugins:
+  tai_hu_auth_enabled:
+    default: false
+    client: true
+  tai_hu_token_key:
+    default: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    type: string
+    secret: true
+    description: "太湖身份认证 JWE token 解密密钥（32字节）"
+  tai_hu_auto_create_user:
+    default: true
+    description: "是否自动创建不存在的用户"
+  tai_hu_email_domain:
+    default: "tencent.com"
+    type: string
+    description: "自动创建用户时使用的邮箱域名"
+  tai_hu_auto_activate_user:
+    default: true
+    description: "自动激活新创建的用户，跳过邮箱验证"

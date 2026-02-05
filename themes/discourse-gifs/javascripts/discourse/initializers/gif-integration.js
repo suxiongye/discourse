@@ -1,0 +1,62 @@
+import { withPluginApi } from "discourse/lib/plugin-api";
+import GifModal from "../components/modal/gif";
+
+export default {
+  name: "discourse-gifs",
+
+  initialize(container) {
+    withPluginApi((api) => {
+      api.onToolbarCreate((toolbar) => {
+        if (toolbar.context.composerEvents) {
+          toolbar.addButton({
+            title: themePrefix("gif.composer_title"),
+            id: "gif_button",
+            group: "extras",
+            icon: "discourse-gifs-gif",
+            condition: () => api.container.lookup("service:site").desktopView,
+            action: () => {
+              const modal = api.container.lookup("service:modal");
+              modal.show(GifModal);
+            },
+          });
+        }
+      });
+
+      const chat = api.container.lookup("service:chat");
+      const currentUser = api.container.lookup("service:current-user");
+
+      if (chat) {
+        const modal = api.container.lookup("service:modal");
+        api.registerChatComposerButton({
+          translatedLabel: themePrefix("gif.composer_title"),
+          id: "gif_button",
+          icon: "discourse-gifs-gif",
+          position: "dropdown",
+          async action(context) {
+            await modal.show(GifModal, {
+              model: {
+                customPickHandler: (message) => {
+                  api.sendChatMessage(this.draft.channel.id, {
+                    message,
+                    threadId:
+                      context === "thread" ? this.draft.thread.id : null,
+                    inReplyToId:
+                      context === "channel" ? this.draft.inReplyTo?.id : null,
+                  });
+                },
+              },
+            });
+
+            this.draft.channel.resetDraft(currentUser);
+          },
+        });
+      }
+    });
+
+    // for old tenor gifs compat
+    const caps = container.lookup("service:capabilities");
+    if (caps.isSafari || caps.isIOS) {
+      document.documentElement.classList.add("discourse-gifs-with-img");
+    }
+  },
+};

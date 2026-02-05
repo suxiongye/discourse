@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discourse
+  namespace: orca
+  labels:
+    k8s-app: discourse
+    qcloud-app: discourse
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: discourse
+      qcloud-app: discourse
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        k8s-app: discourse
+        qcloud-app: discourse
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: k8s-app
+                  operator: In
+                  values:
+                  - discourse
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      imagePullSecrets:
+      - name: csigsecret
+      initContainers:
+      - name: assets-precompile
+        image: csighub.tencentyun.com/zxchain/discourse:latest
+        imagePullPolicy: Always
+        command:
+        - /bin/bash
+        - -c
+        - |
+          # 获取当前镜像版本
+          CURRENT_VERSION=$(cat /var/www/discourse/VERSION 2>/dev/null || echo "unknown")
+          CACHED_VERSION=$(cat /assets-cache/assets/.version 2>/dev/null || echo "none")
+
+          echo "Current image version: $CURRENT_VERSION"
+          echo "Cached assets version: $CACHED_VERSION"
+
+          if [ "$CURRENT_VERSION" = "$CACHED_VERSION" ] && [ -d "/assets-cache/assets" ]; then
+            echo "Assets cache is up to date, skipping precompile"
+          else
+            echo "Precompiling assets..."
+            cd /var/www/discourse
+            bundle exec rake assets:precompile
+
+            # 保存到缓存目录
+            rm -rf /assets-cache/assets
+            cp -r /var/www/discourse/public/assets /assets-cache/
+            # 版本文件写入 assets 目录内，供主容器校验
+            echo "$CURRENT_VERSION" > /assets-cache/assets/.version
+            echo "Assets cached successfully"
+          fi
+        envFrom:
+        - configMapRef:
+            name: discourse-env
+        volumeMounts:
+        - name: assets-cache
+          mountPath: /assets-cache
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+      containers:
+      - name: discourse
+        image: csighub.tencentyun.com/zxchain/discourse:latest
+        imagePullPolicy: Always
+        env:
+        - name: PATH
+          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        envFrom:
+        - configMapRef:
+            name: discourse-env
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - sleep 30
+        livenessProbe:
+          failureThreshold: 60
+          httpGet:
+            path: /srv/status
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        readinessProbe:
+          failureThreshold: 60
+          httpGet:
+            path: /srv/status
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 5
+        resources:
+          requests:
+            cpu: "1"
+            memory: 1Gi
+        securityContext:
+          privileged: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - name: assets-cache
+          mountPath: /var/www/discourse/public/assets
+          subPath: assets
+      volumes:
+      - name: assets-cache
+        persistentVolumeClaim:
+          claimName: discourse-assets
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

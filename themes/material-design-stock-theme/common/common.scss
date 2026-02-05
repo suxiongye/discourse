@@ -1,0 +1,195 @@
+@font-face {
+  font-family: Roboto;
+  src: url($roboto);
+}
+
+@font-face {
+  font-family: Roboto;
+  src: url($roboto-bold);
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: Roboto;
+  src: url($roboto-italic);
+  font-style: italic;
+}
+
+html {
+  font-family: Roboto, sans-serif;
+  font-weight: 400;
+}
+
+body input,
+body button,
+body select,
+body textarea {
+  font-family: Roboto, Helvetica, Arial, sans-serif;
+}
+
+@mixin boxShadow {
+  // Matched from https://material.io/components/cards/
+  box-shadow:
+    0 2px 1px -1px rgb(0, 0, 0, 0.2),
+    0 1px 1px 0 rgb(0, 0, 0, 0.14),
+    0 1px 3px 0 rgb(0, 0, 0, 0.12);
+}
+
+@mixin buttonShadow {
+  // Matched from https://material.io/components/buttons/
+  box-shadow:
+    0 3px 1px -2px rgb(0, 0, 0, 0.2),
+    0 2px 2px 0 rgb(0, 0, 0, 0.14),
+    0 1px 5px 0 rgb(0, 0, 0, 0.12);
+}
+
+@import "sidebar";
+
+// raise and round buttons
+.btn:not(
+  .sidebar-section-header,
+  .header-sidebar-toggle button,
+  .user-menu-tab,
+  .btn-flat,
+  .btn-link,
+  .btn-transparent
+) {
+  border-radius: 4px;
+
+  @include boxShadow;
+
+  &.btn-flat.close {
+    box-shadow: none;
+  }
+}
+
+// remove shadow from a few buttons
+.d-editor-button-bar .btn.btn-icon,
+.bulk-select-all,
+.bulk-clear-all,
+.period-chooser-header,
+.topic-map .btn.no-text,
+.badge-section .btn,
+#revision .btn,
+#new-account-link,
+#login-link,
+.dropdown-menu li .btn {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+// Topic adjustments
+.small-action {
+  border-top: none;
+  box-sizing: border-box;
+  margin-block: 1em 0.5em;
+  border: none;
+  border-radius: 4px;
+  box-shadow:
+    0 2px 5px 0 rgb(0, 0, 0, 0.16),
+    0 0 0 0 rgb(0, 0, 0, 0.12);
+  max-width: 754px;
+  padding-left: 20px;
+
+  .desktop-view & {
+    margin-left: calc(var(--topic-avatar-width) + 10px);
+  }
+
+  button {
+    margin-left: 1em;
+    background-color: var(--material-lighter-secondary);
+  }
+
+  .topic-avatar {
+    display: none;
+  }
+
+  .small-action-desc {
+    border: none;
+  }
+}
+
+.read-state {
+  right: 1em;
+}
+
+.gap {
+  margin-top: 1em;
+  padding-bottom: 0;
+}
+
+.post-notice {
+  border: none;
+  background: transparent;
+
+  .desktop-view & {
+    margin-left: 50px;
+    margin-top: 0.75em;
+  }
+}
+
+.popup-menu .btn {
+  box-shadow: none;
+}
+
+// Personal messages
+.archetype-private_message {
+  .topic-body {
+    box-shadow: none;
+
+    .cooked {
+      @include boxShadow;
+    }
+  }
+}
+
+// Admin
+.admin-controls .nav-pills > li a.active {
+  background: transparent;
+}
+
+// Chat
+body.has-sidebar-page.has-full-page-chat #main-outlet-wrapper {
+  gap: 2em;
+}
+
+.has-full-page-chat:not(.discourse-sidebar) .full-page-chat {
+  border: none;
+}
+
+.chat-channel-card {
+  background: var(--primary-very-low);
+  border: 1px solid;
+  border-left: 5px solid;
+  border-top-color: var(--primary-low) !important;
+  border-bottom-color: var(--primary-low) !important;
+  border-right-color: var(--primary-low) !important;
+}
+
+#main-outlet .topic-map {
+  padding: 10px;
+  margin-top: 0.75em;
+  border: none;
+  border-radius: 4px;
+  box-shadow:
+    0 2px 5px 0 rgb(0, 0, 0, 0.16),
+    0 0 0 0 rgb(0, 0, 0, 0.12);
+
+  .desktop-view & {
+    padding: 15px 30px;
+    max-width: 752px;
+    margin-left: calc(var(--topic-avatar-width) + 10px);
+  }
+}
+
+.topic-timer-info {
+  border: none;
+}
+
+.extra-info-wrapper {
+  .badge-category__wrapper .d-icon,
+  .title-wrapper .topic-statuses .d-icon,
+  .assigned-to .d-icon {
+    color: var(--secondary);
+  }
+}

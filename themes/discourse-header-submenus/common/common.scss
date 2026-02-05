@@ -1,0 +1,132 @@
+@function fallback($setting, $color) {
+  @if not $setting or $setting == "" {
+    @return $color;
+  } @else {
+    @return $setting;
+  }
+}
+
+$item-height: 40px;
+$icon-opacity: 0.7;
+
+.top-menu {
+  background: fallback($Menu_background, $primary);
+  width: 100%;
+
+  .menu-content {
+    display: flex;
+    align-items: center;
+    justify-content: if($Invert_position == "true", flex-end, flex-start);
+  }
+
+  .menu-items {
+    display: flex;
+    height: $item-height;
+  }
+
+  .menu-item {
+    position: relative;
+    color: fallback($Menu_item_color, $secondary);
+    border: none;
+    padding: 0 0.5em;
+    font-size: $font-up-1;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+
+    &:hover,
+    &:active,
+    &:focus {
+      background: fallback($Menu_item-active_background, $primary-low);
+      color: fallback($Menu-item-active-color, $primary);
+      cursor: default;
+
+      .d-icon-caret-right {
+        transform: rotate(90deg);
+      }
+
+      .d-header-dropdown {
+        display: block;
+        top: $item-height;
+        left: 0;
+        z-index: z("header") + 1;
+
+        .rtl & {
+          left: unset;
+          right: 0;
+        }
+      }
+
+      @if $Invert_position == "true" {
+        &:last-child {
+          .d-header-dropdown {
+            left: unset;
+            right: 0;
+
+            .rtl & {
+              right: unset;
+              left: 0;
+            }
+          }
+        }
+      }
+    }
+
+    .d-icon-caret-right {
+      margin-left: 0.25em;
+      transition: transform 0.15s ease-in-out;
+
+      .rtl & {
+        margin-left: 0;
+        margin-right: 0.25em;
+      }
+    }
+  }
+
+  .d-header-dropdown {
+    position: absolute;
+    display: none;
+  }
+
+  .d-dropdown-menu {
+    min-width: 160px;
+    background: fallback($Submenu_background, $secondary);
+    box-shadow: var(--shadow-menu-panel);
+    margin: 0;
+    list-style: none;
+  }
+
+  .submenu-link {
+    display: flex;
+    align-items: center;
+    color: fallback($Submenu_item_color, $primary);
+    padding: 0.5em;
+    font-size: $font-down-1;
+    white-space: nowrap;
+
+    &:hover {
+      color: fallback($Submenu_item_hover_color, $primary);
+      background-color: fallback($Submenu_item_hover_background, $tertiary-low);
+    }
+  }
+
+  .divider {
+    border-top: solid 1px fallback($Divider_color, $primary-low);
+    margin: 0.25em auto;
+  }
+
+  .d-icon {
+    opacity: $icon-opacity;
+    min-width: 1em;
+
+    &:not(.d-icon-caret-right) {
+      margin-right: 0.5em;
+
+      .rtl & {
+        margin-right: 0;
+        margin-left: 0.5em;
+      }
+    }
+  }
+}

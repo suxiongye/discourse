@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discourse-sidekiq
+  namespace: orca
+  labels:
+    k8s-app: discourse-sidekiq
+    qcloud-app: discourse-sidekiq
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      k8s-app: discourse-sidekiq
+      qcloud-app: discourse-sidekiq
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        k8s-app: discourse-sidekiq
+        qcloud-app: discourse-sidekiq
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: k8s-app
+                  operator: In
+                  values:
+                  - discourse-sidekiq
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      imagePullSecrets:
+      - name: csigsecret
+      containers:
+      - name: discourse-sidekiq
+        image: csighub.tencentyun.com/zxchain/discourse:latest
+        imagePullPolicy: Always
+        command:
+        - /bin/sh
+        - -c
+        - cd /var/www/discourse && bundle exec sidekiq
+        env:
+        - name: PATH
+          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        envFrom:
+        - configMapRef:
+            name: discourse-env
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - sleep 30
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        securityContext:
+          privileged: false
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30

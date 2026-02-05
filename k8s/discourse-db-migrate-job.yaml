@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: discourse-db-migrate
+  namespace: orca
+  labels:
+    app: discourse
+    job: db-migrate
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: discourse
+        job: db-migrate
+    spec:
+      imagePullSecrets:
+      - name: csigsecret
+      restartPolicy: Never
+      containers:
+      - name: db-migrate
+        image: csighub.tencentyun.com/zxchain/discourse:latest
+        imagePullPolicy: Always
+        command:
+        - /bin/sh
+        - -c
+        - |
+          cd /var/www/discourse
+          bundle exec rake db:create
+          bundle exec rake db:migrate
+        env:
+        - name: PATH
+          value: /usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+        envFrom:
+        - configMapRef:
+            name: discourse-env
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        securityContext:
+          privileged: false
+      terminationGracePeriodSeconds: 30

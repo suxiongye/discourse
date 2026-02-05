@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: discourse-assets
+  namespace: orca
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  # 腾讯云 CBS，根据你的环境调整 storageClassName
+  # storageClassName: cbs-ssd

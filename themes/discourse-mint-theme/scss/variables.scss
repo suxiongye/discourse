@@ -1,0 +1,27 @@
+@mixin mint-card-bg {
+  background: var(--primary-very-low);
+
+  @media (prefers-color-scheme: light) {
+    // incorrect rule, see: https://github.com/stylelint-scss/stylelint-config-recommended-scss/issues/369
+    /* stylelint-disable-next-line no-invalid-position-declaration */
+    background: var(--header_background);
+  }
+}
+
+:root {
+  --mint-border-radius: 10px;
+  --mint-hover-shadow: 4px 4px var(--tertiary-high);
+  --mint-color-mint: #75bdad;
+  --mint-color-blue: #e5f8ff;
+}
+
+$color-square-gradient: linear-gradient(
+  4deg,
+  rgb(143, 236, 202, 0.29) 55%,
+  rgb(74, 247, 255, 0.08) 100%
+);
+$color-square-webkit-gradient: -webkit-linear-gradient(
+  4deg,
+  rgb(143, 236, 202, 0.29) 55%,
+  rgb(74, 247, 255, 0.08) 100%
+);

@@ -1997,4 +1997,51 @@ RSpec.describe ApplicationController do
       )
     end
   end
+
+  describe "#has_valid_tai_hu_token?" do
+    let(:token_key) { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" }
+
+    before { ENV["TAI_HU_TOKEN_KEY"] = token_key }
+    after { ENV.delete("TAI_HU_TOKEN_KEY") }
+
+    it "allows requests with valid Tai Hu token to bypass CSRF verification" do
+      require "json/jwt"
+
+      # 创建有效的太湖 token
+      payload = {
+        "LoginName" => "testuser",
+        "StaffId" => 123456,
+        "Expiration" => (Time.now.utc + 3600).iso8601,
+      }
+      jwk = JSON::JWK.new(token_key)
+      jwt = JSON::JWT.new(payload)
+      jwe = jwt.encrypt(jwk, :dir, :A256GCM)
+      valid_token = jwe.to_s
+
+      # 发送没有 CSRF token 但有太湖 token 的 POST 请求
+      # SessionController#csrf 不需要认证，可以用来测试
+      post "/session/csrf.json", headers: { "HTTP_X_TAI_IDENTITY" => valid_token }
+
+      # 应该成功（不返回 403）
+      expect(response.status).not_to eq(403)
+    end
+
+    it "rejects requests with invalid Tai Hu token" do
+      # 发送没有 CSRF token 且太湖 token 无效的 POST 请求
+      post "/session/csrf.json", headers: { "HTTP_X_TAI_IDENTITY" => "invalid_token" }
+
+      # 应该返回 403 CSRF 错误
+      expect(response.status).to eq(403)
+      expect(response.body).to include("BAD CSRF")
+    end
+
+    it "rejects requests without any authentication" do
+      # 发送没有 CSRF token 也没有太湖 token 的 POST 请求
+      post "/session/csrf.json"
+
+      # 应该返回 403 CSRF 错误
+      expect(response.status).to eq(403)
+      expect(response.body).to include("BAD CSRF")
+    end
+  end
 end

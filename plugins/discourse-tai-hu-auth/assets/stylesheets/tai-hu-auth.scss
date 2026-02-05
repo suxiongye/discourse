@@ -1,0 +1,6 @@
+// 太湖认证样式
+// 由于太湖认证是前置认证，用户无法真正登出，因此隐藏 logout 按钮
+
+.user-menu .quick-access-panel .logout {
+  display: none !important;
+}

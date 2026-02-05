@@ -1,0 +1,63 @@
+show_description:
+  default: true
+
+show_mobile:
+  default: true
+
+show_subcategory:
+  default: true
+
+hide_if_no_description:
+  default: true
+
+show_category_logo:
+  default: false
+
+align_text:
+  default: center
+  type: "enum"
+  choices:
+    - center
+    - left
+    - right
+
+exceptions:
+  default: ""
+  type: list
+  list_type: simple
+
+categories:
+  type: objects
+  default: []
+  schema:
+    name: category
+    identifier: category_id
+    properties:
+      category_id:
+        type: categories
+        required: true
+        validations:
+          max: 1
+      target:
+        type: enum
+        default: all
+        choices:
+          - all
+          - no_sub
+          - only_sub
+
+plugin_outlet:
+  default: "below-site-header"
+  type: "enum"
+  choices:
+    - "below-site-header"
+    - "above-site-header"
+    - "above-main-container"
+    - "header-list-container-bottom"
+  refresh: true
+
+show_category_icon:
+  default: false
+
+override_category_icon_color:
+  default: false

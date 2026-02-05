@@ -1,0 +1,7 @@
+en:
+  site_settings:
+    tai_hu_auth_enabled: "Enable Tai Hu (IOA) authentication"
+    tai_hu_token_key: "Tai Hu JWE token decryption key"
+    tai_hu_auto_create_user: "Automatically create users from Tai Hu authentication"
+    tai_hu_email_domain: "Email domain for auto-created users"
+    tai_hu_auto_activate_user: "Auto-activate new users (skip email verification)"

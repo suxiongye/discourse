@@ -1,0 +1,28 @@
+.has-sidebar-page .sidebar-wrapper {
+  margin-top: 1.5em;
+  top: calc((var(--header-offset, 0) + 1.5em));
+  height: calc(100vh - (var(--header-offset, 0) + 3em));
+}
+
+// Sidebar toggle styling
+.header-sidebar-toggle {
+  button {
+    .d-icon {
+      color: var(--tertiary);
+      box-shadow: none;
+    }
+
+    &:hover {
+      .d-icon {
+        color: var(--primary-med-or-secondary-med);
+      }
+    }
+  }
+}
+
+// Sidebar Style Overrides
+.sidebar-wrapper {
+  @include boxShadow;
+  margin-top: 2.4em;
+  background-color: var(--material-lighter-secondary);
+}

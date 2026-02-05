@@ -315,3 +315,6 @@ gem "hashery", require: false
 gem "ttfunk", require: false
 gem "afm", require: false
 gem "pdf-reader", require: false
+
+# for JWE decryption (太湖身份认证)
+gem "json-jwt", require: false

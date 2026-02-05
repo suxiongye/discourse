@@ -1,0 +1,131 @@
+@use "lib/viewport";
+
+body:not(.category-header) {
+  // hides banners based on outcome of shouldShow
+  .category-title-header {
+    display: none;
+  }
+}
+
+body.category-header {
+  // hide core category heading
+  .category-heading {
+    display: none;
+  }
+}
+
+.category-title-contents {
+  display: grid;
+  grid-template-areas: "logo title" "logo description";
+  grid-template-columns: auto 1fr;
+
+  @include viewport.until(md) {
+    grid-template-areas: "logo" "title" "description";
+    grid-template-columns: auto;
+  }
+
+  .category-logo {
+    grid-area: logo;
+    align-self: center;
+
+    --max-height: 8em;
+    margin: 0 1em 0 0;
+
+    @include viewport.until(md) {
+      margin: 0 0 0.5em;
+    }
+
+    &:not(:has(img)) {
+      margin: 0;
+    }
+  }
+
+  .category-title {
+    grid-area: title;
+    align-self: end;
+  }
+
+  .category-title .badge-category__name {
+    font-size: var(--font-up-1);
+  }
+
+  .category-title-description {
+    grid-area: description;
+  }
+}
+
+div[class^="category-title-header"] {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  background: var(--category-banner-background);
+  color: var(--category-banner-color);
+
+  @if $align_text == "center" {
+    text-align: center;
+  }
+
+  @if $align_text == "right" {
+    text-align: right;
+  }
+
+  .category-title-contents {
+    max-width: 500px;
+    padding: 40px;
+
+    .d-icon-lock {
+      height: 0.75em;
+      width: 0.75em;
+      vertical-align: 0;
+    }
+  }
+
+  .category-title-description {
+    a,
+    a:visited {
+      color: currentcolor;
+      text-decoration: underline;
+    }
+
+    a.mention,
+    a.mention-group,
+    a.hashtag-cooked {
+      color: var(--primary);
+      background: var(--mention-background-color);
+      text-decoration: none;
+    }
+
+    span.mention {
+      color: inherit;
+    }
+  }
+
+  // styles that impact the core category icons
+  .badge-category__wrapper {
+    display: inline-block;
+    color: unset;
+
+    .badge-category {
+      display: flex;
+      color: currentcolor;
+      justify-content: center;
+      align-items: center;
+
+      .d-icon {
+        height: 0.75em;
+        width: 0.75em;
+
+        @if $override_category_icon_color == "true" {
+          color: currentcolor;
+        }
+      }
+    }
+  }
+}
+
+@if $plugin_outlet == "header-list-container-bottom" {
+  #header-list-area {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+}

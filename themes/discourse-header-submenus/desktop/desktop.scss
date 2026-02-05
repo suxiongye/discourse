@@ -1,0 +1,19 @@
+$item-height: 40px;
+
+@if $Fixed_mode == "true" {
+  .header-submenus {
+    position: sticky;
+    top: 0;
+    z-index: z("header") + 1;
+  }
+
+  .d-header-wrap {
+    top: $item-height;
+  }
+}
+
+.top-menu {
+  .menu-item.vmo {
+    display: none;
+  }
+}
