@@ -97,31 +97,7 @@ class Auth::DefaultCurrentUserProvider
 
   # our current user, return nil if none is found
   def current_user
-    # ===== 太湖调试日志 =====
-    tai_identity_present = false
-    begin
-      tai_identity_present = @env && @env["HTTP_X_TAI_IDENTITY"].present?
-      if tai_identity_present
-        Rails.logger.info("[DEBUG-PROVIDER] current_user 被调用")
-        Rails.logger.info("[DEBUG-PROVIDER] env[CURRENT_USER_KEY] 已存在=#{@env.key?(CURRENT_USER_KEY) rescue false}, 值=#{@env[CURRENT_USER_KEY]&.id rescue 'error'}")
-      end
-    rescue => e
-      Rails.logger.debug("[DEBUG-PROVIDER] 日志异常: #{e.message}")
-    end
-    # ===== 太湖调试日志结束 =====
-    
-    if @env.key?(CURRENT_USER_KEY)
-      # ===== 太湖调试日志 =====
-      begin
-        if tai_identity_present
-          Rails.logger.info("[DEBUG-PROVIDER] 返回缓存的用户: #{@env[CURRENT_USER_KEY]&.id rescue 'error'}")
-        end
-      rescue => e
-        Rails.logger.debug("[DEBUG-PROVIDER] 日志异常: #{e.message}")
-      end
-      # ===== 太湖调试日志结束 =====
-      return @env[CURRENT_USER_KEY]
-    end
+    return @env[CURRENT_USER_KEY] if @env.key?(CURRENT_USER_KEY)
 
     # bypass if we have the shared session header
     if shared_key = @env["HTTP_X_SHARED_SESSION_KEY"]
@@ -249,16 +225,6 @@ class Auth::DefaultCurrentUserProvider
     end
 
     @env[CURRENT_USER_KEY] = current_user
-    
-    # ===== 太湖调试日志 =====
-    begin
-      if tai_identity_present
-        Rails.logger.info("[DEBUG-PROVIDER] 设置缓存 env[CURRENT_USER_KEY]=#{current_user&.id rescue 'error'}")
-      end
-    rescue => e
-      Rails.logger.debug("[DEBUG-PROVIDER] 日志异常: #{e.message}")
-    end
-    # ===== 太湖调试日志结束 =====
   end
 
   def refresh_session(user, session, cookie_jar)
@@ -294,19 +260,6 @@ class Auth::DefaultCurrentUserProvider
   end
 
   def log_on_user(user, session, cookie_jar, opts = {})
-    # ===== 太湖调试日志 =====
-    tai_identity_present = false
-    begin
-      tai_identity_present = @env && @env["HTTP_X_TAI_IDENTITY"].present?
-      if tai_identity_present
-        Rails.logger.info("[DEBUG-PROVIDER] log_on_user 开始, user=#{user&.id rescue 'error'}")
-        Rails.logger.info("[DEBUG-PROVIDER] log_on_user 前 env[CURRENT_USER_KEY]=#{@env[CURRENT_USER_KEY]&.id rescue 'nil'}")
-      end
-    rescue => e
-      Rails.logger.debug("[DEBUG-PROVIDER] log_on_user 日志异常: #{e.message}")
-    end
-    # ===== 太湖调试日志结束 =====
-    
     @env[USER_TOKEN_KEY] = @user_token =
       UserAuthToken.generate!(
         user_id: user.id,
@@ -326,16 +279,6 @@ class Auth::DefaultCurrentUserProvider
     UserAuthToken.enforce_session_count_limit!(user.id)
 
     @env[CURRENT_USER_KEY] = user
-    
-    # ===== 太湖调试日志 =====
-    begin
-      if tai_identity_present
-        Rails.logger.info("[DEBUG-PROVIDER] log_on_user 完成, env[CURRENT_USER_KEY]=#{@env[CURRENT_USER_KEY]&.id rescue 'error'}")
-      end
-    rescue => e
-      Rails.logger.debug("[DEBUG-PROVIDER] log_on_user 日志异常: #{e.message}")
-    end
-    # ===== 太湖调试日志结束 =====
   end
 
   def start_impersonating_user(user)
