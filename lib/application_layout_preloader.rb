@@ -23,6 +23,11 @@ class ApplicationLayoutPreloader
   end
 
   def preloaded_data
+    # ===== 太湖调试日志 =====
+    Rails.logger.info("[DEBUG-PRELOAD] preloaded_data 开始")
+    Rails.logger.info("[DEBUG-PRELOAD] @guardian.user=#{@guardian.user&.id}, authenticated?=#{@guardian.authenticated?}")
+    # ===== 太湖调试日志结束 =====
+    
     preload_anonymous_data
 
     preload_upcoming_change_data(@guardian.user)
@@ -30,6 +35,15 @@ class ApplicationLayoutPreloader
     if @guardian.authenticated?
       @guardian.user.sync_notification_channel_position
       preload_current_user_data
+      
+      # ===== 太湖调试日志 =====
+      Rails.logger.info("[DEBUG-PRELOAD] 已调用 preload_current_user_data")
+      Rails.logger.info("[DEBUG-PRELOAD] @preloaded 包含 currentUser=#{@preloaded.key?('currentUser')}")
+      # ===== 太湖调试日志结束 =====
+    else
+      # ===== 太湖调试日志 =====
+      Rails.logger.info("[DEBUG-PRELOAD] guardian 未认证，跳过 preload_current_user_data")
+      # ===== 太湖调试日志结束 =====
     end
 
     @preloaded

@@ -376,9 +376,28 @@ class ApplicationController < ActionController::Base
   end
 
   def set_current_user_for_logs
+    # ===== 太湖调试日志 =====
+    if request.headers["HTTP_X_TAI_IDENTITY"].present?
+      Rails.logger.info("[DEBUG-CORE] set_current_user_for_logs 开始")
+      Rails.logger.info("[DEBUG-CORE] env[CURRENT_USER_KEY] 已存在=#{request.env.key?(Auth::DefaultCurrentUserProvider::CURRENT_USER_KEY)}, 值=#{request.env[Auth::DefaultCurrentUserProvider::CURRENT_USER_KEY]&.id}")
+    end
+    # ===== 太湖调试日志结束 =====
+    
     if current_user
       Logster.add_to_env(request.env, "username", current_user.username)
       response.headers["X-Discourse-Username"] = current_user.username
+      
+      # ===== 太湖调试日志 =====
+      if request.headers["HTTP_X_TAI_IDENTITY"].present?
+        Rails.logger.info("[DEBUG-CORE] set_current_user_for_logs: current_user=#{current_user.username} (id: #{current_user.id})")
+      end
+      # ===== 太湖调试日志结束 =====
+    else
+      # ===== 太湖调试日志 =====
+      if request.headers["HTTP_X_TAI_IDENTITY"].present?
+        Rails.logger.info("[DEBUG-CORE] set_current_user_for_logs: current_user=nil")
+      end
+      # ===== 太湖调试日志结束 =====
     end
     response.headers["X-Discourse-Route"] = "#{controller_path}/#{action_name}"
   end
@@ -477,8 +496,21 @@ class ApplicationController < ActionController::Base
   def guardian
     # sometimes we log on a user in the middle of a request so we should throw
     # away the cached guardian instance when we do that
+    
+    # ===== 太湖调试日志 =====
+    if request&.headers && request.headers["HTTP_X_TAI_IDENTITY"].present?
+      Rails.logger.info("[DEBUG-CORE] guardian 被调用, @guardian.user=#{@guardian&.user&.id}, current_user=#{current_user&.id}")
+    end
+    # ===== 太湖调试日志结束 =====
+    
     if (@guardian&.user).blank? && current_user.present?
       @guardian = Guardian.new(current_user, request)
+      
+      # ===== 太湖调试日志 =====
+      if request&.headers && request.headers["HTTP_X_TAI_IDENTITY"].present?
+        Rails.logger.info("[DEBUG-CORE] guardian 重建, 新 @guardian.user=#{@guardian.user&.id}")
+      end
+      # ===== 太湖调试日志结束 =====
     end
     @guardian ||= Guardian.new(current_user, request)
   end
@@ -612,6 +644,13 @@ class ApplicationController < ActionController::Base
   end
 
   def initialize_application_layout_preloader
+    # ===== 太湖调试日志 =====
+    if request.headers["HTTP_X_TAI_IDENTITY"].present?
+      Rails.logger.info("[DEBUG-CORE] initialize_application_layout_preloader 开始")
+      Rails.logger.info("[DEBUG-CORE] 调用 guardian 前, current_user=#{current_user&.id}")
+    end
+    # ===== 太湖调试日志结束 =====
+    
     @application_layout_preloader =
       ApplicationLayoutPreloader.new(
         guardian:,
@@ -619,6 +658,14 @@ class ApplicationController < ActionController::Base
         theme_target: view_context.mobile_view? ? :mobile : :desktop,
         login_method:,
       )
+    
+    # ===== 太湖调试日志 =====
+    if request.headers["HTTP_X_TAI_IDENTITY"].present?
+      Rails.logger.info("[DEBUG-CORE] initialize_application_layout_preloader 完成")
+      Rails.logger.info("[DEBUG-CORE] @application_layout_preloader.guardian.user=#{@application_layout_preloader.instance_variable_get(:@guardian)&.user&.id}")
+      Rails.logger.info("[DEBUG-CORE] @application_layout_preloader.guardian.authenticated?=#{@application_layout_preloader.instance_variable_get(:@guardian)&.authenticated?}")
+    end
+    # ===== 太湖调试日志结束 =====
   end
 
   def store_preloaded(key, json)

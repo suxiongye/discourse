@@ -15,8 +15,21 @@ module CurrentUser
   end
 
   def log_on_user(user, opts = {})
+    # ===== 太湖调试日志 =====
+    if request&.headers && request.headers["HTTP_X_TAI_IDENTITY"].present?
+      Rails.logger.info("[DEBUG-MODULE] log_on_user 被调用, user=#{user.id}")
+      Rails.logger.info("[DEBUG-MODULE] @current_user_provider 已存在=#{@current_user_provider.present?}")
+    end
+    # ===== 太湖调试日志结束 =====
+    
     current_user_provider.log_on_user(user, session, cookies, opts)
     user.logged_in
+    
+    # ===== 太湖调试日志 =====
+    if request&.headers && request.headers["HTTP_X_TAI_IDENTITY"].present?
+      Rails.logger.info("[DEBUG-MODULE] log_on_user 完成")
+    end
+    # ===== 太湖调试日志结束 =====
   end
 
   def log_off_user
@@ -40,7 +53,22 @@ module CurrentUser
   end
 
   def current_user
-    current_user_provider.current_user
+    # ===== 太湖调试日志 =====
+    if request&.headers && request.headers["HTTP_X_TAI_IDENTITY"].present?
+      Rails.logger.info("[DEBUG-MODULE] current_user 被调用 (CurrentUser module)")
+      Rails.logger.info("[DEBUG-MODULE] @current_user_provider 已存在=#{@current_user_provider.present?}")
+    end
+    # ===== 太湖调试日志结束 =====
+    
+    result = current_user_provider.current_user
+    
+    # ===== 太湖调试日志 =====
+    if request&.headers && request.headers["HTTP_X_TAI_IDENTITY"].present?
+      Rails.logger.info("[DEBUG-MODULE] current_user 返回=#{result&.id}")
+    end
+    # ===== 太湖调试日志结束 =====
+    
+    result
   end
 
   def refresh_session(user)
