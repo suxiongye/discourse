@@ -23,9 +23,16 @@ class ApplicationLayoutPreloader
   end
 
   def preloaded_data
-    # ===== 太湖调试日志 =====
-    Rails.logger.info("[DEBUG-PRELOAD] preloaded_data 开始")
-    Rails.logger.info("[DEBUG-PRELOAD] @guardian.user=#{@guardian.user&.id}, authenticated?=#{@guardian.authenticated?}")
+    # ===== 太湖调试日志（仅在有太湖 header 时输出） =====
+    begin
+      tai_debug = defined?(RequestStore) && RequestStore.store[:tai_hu_debug]
+      if tai_debug
+        Rails.logger.info("[DEBUG-PRELOAD] preloaded_data 开始")
+        Rails.logger.info("[DEBUG-PRELOAD] @guardian.user=#{@guardian&.user&.id}, authenticated?=#{@guardian&.authenticated?}")
+      end
+    rescue => e
+      Rails.logger.debug("[DEBUG-PRELOAD] 日志异常: #{e.message}")
+    end
     # ===== 太湖调试日志结束 =====
     
     preload_anonymous_data
@@ -37,12 +44,24 @@ class ApplicationLayoutPreloader
       preload_current_user_data
       
       # ===== 太湖调试日志 =====
-      Rails.logger.info("[DEBUG-PRELOAD] 已调用 preload_current_user_data")
-      Rails.logger.info("[DEBUG-PRELOAD] @preloaded 包含 currentUser=#{@preloaded.key?('currentUser')}")
+      begin
+        if tai_debug
+          Rails.logger.info("[DEBUG-PRELOAD] 已调用 preload_current_user_data")
+          Rails.logger.info("[DEBUG-PRELOAD] @preloaded 包含 currentUser=#{@preloaded&.key?('currentUser')}")
+        end
+      rescue => e
+        Rails.logger.debug("[DEBUG-PRELOAD] 日志异常: #{e.message}")
+      end
       # ===== 太湖调试日志结束 =====
     else
       # ===== 太湖调试日志 =====
-      Rails.logger.info("[DEBUG-PRELOAD] guardian 未认证，跳过 preload_current_user_data")
+      begin
+        if tai_debug
+          Rails.logger.info("[DEBUG-PRELOAD] guardian 未认证，跳过 preload_current_user_data")
+        end
+      rescue => e
+        Rails.logger.debug("[DEBUG-PRELOAD] 日志异常: #{e.message}")
+      end
       # ===== 太湖调试日志结束 =====
     end
 

@@ -57,6 +57,20 @@ export default {
       }
     });
 
+    // ========== 太湖认证调试日志 ==========
+    // eslint-disable-next-line no-console
+    console.log("[太湖认证-Bootstrap] PreloadStore 初始化完成");
+    // eslint-disable-next-line no-console
+    console.log("[太湖认证-Bootstrap] preloaded keys:", keys);
+    // eslint-disable-next-line no-console
+    console.log("[太湖认证-Bootstrap] 包含 currentUser:", keys.includes("currentUser"));
+    if (keys.includes("currentUser")) {
+      const cu = PreloadStore.get("currentUser");
+      // eslint-disable-next-line no-console
+      console.log("[太湖认证-Bootstrap] currentUser:", cu ? { id: cu.id, username: cu.username } : null);
+    }
+    // ========== 太湖认证调试日志结束 ==========
+
     setupURL(setupData.cdn, setupData.baseUrl, setupData.baseUri);
     setEnvironment(setupData.environment);
 

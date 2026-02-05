@@ -92,25 +92,35 @@ after_initialize do
                    if: -> { SiteSetting.tai_hu_auth_enabled && !request.xhr? && !request.format&.json? }
 
       def auto_login_with_tai_hu_token
-        # ========== 调试信息开始 ==========
-        Rails.logger.info("=" * 60)
-        Rails.logger.info("太湖认证: ========== 请求开始 ==========")
-        Rails.logger.info("太湖认证: [请求信息] path=#{request.path}, method=#{request.method}")
-        Rails.logger.info("太湖认证: [请求类型] xhr=#{request.xhr?}, format=#{request.format}, json=#{request.format&.json?}")
-        Rails.logger.info("太湖认证: [env缓存状态] key存在=#{request.env.key?(Auth::DefaultCurrentUserProvider::CURRENT_USER_KEY)}, 值=#{request.env[Auth::DefaultCurrentUserProvider::CURRENT_USER_KEY]&.id}")
-        
         # 检查是否有太湖 header
         tai_identity = request.headers["HTTP_X_TAI_IDENTITY"]
-        Rails.logger.info("太湖认证: [Header] X-TAI-IDENTITY 存在=#{tai_identity.present?}, 长度=#{tai_identity&.length}")
         
+        # 如果没有太湖 header，直接返回（不输出日志）
         if tai_identity.blank?
-          Rails.logger.info("太湖认证: [跳过] 没有 x-tai-identity header")
-          Rails.logger.info("=" * 60)
           return
+        end
+        
+        # 设置调试标记，让其他地方知道这是太湖请求
+        RequestStore.store[:tai_hu_debug] = true if defined?(RequestStore)
+        
+        # ========== 调试信息开始 ==========
+        begin
+          Rails.logger.info("=" * 60)
+          Rails.logger.info("太湖认证: ========== 请求开始 ==========")
+          Rails.logger.info("太湖认证: [请求信息] path=#{request.path}, method=#{request.method}")
+          Rails.logger.info("太湖认证: [请求类型] xhr=#{request.xhr?}, format=#{request.format}, json=#{request.format&.json?}")
+          Rails.logger.info("太湖认证: [env缓存状态] key存在=#{request.env.key?(Auth::DefaultCurrentUserProvider::CURRENT_USER_KEY)}, 值=#{request.env[Auth::DefaultCurrentUserProvider::CURRENT_USER_KEY]&.id}")
+          Rails.logger.info("太湖认证: [Header] X-TAI-IDENTITY 存在=#{tai_identity.present?}, 长度=#{tai_identity&.length}")
+        rescue => e
+          Rails.logger.debug("太湖认证: 日志异常 - #{e.message}")
         end
 
         # 检查 Cookie 状态
-        Rails.logger.info("太湖认证: [Cookie] 原始 _t cookie=#{request.cookies['_t'].present?}")
+        begin
+          Rails.logger.info("太湖认证: [Cookie] 原始 _t cookie=#{request.cookies['_t'].present?}")
+        rescue => e
+          Rails.logger.debug("太湖认证: Cookie 检查异常 - #{e.message}")
+        end
         
         # 重要：先检查是否已有有效的 Cookie 登录态
         existing_user = check_existing_session_without_caching
