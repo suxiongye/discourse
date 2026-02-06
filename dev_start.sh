@@ -36,7 +36,7 @@ export RAILS_ENV="development"
 export RACK_ENV="development"
 
 # Discourse 基础配置
-export DISCOURSE_HOSTNAME="dev.orcaspace.woa.com"
+export DISCOURSE_HOSTNAME="127.0.0.1"
 export RAILS_DEVELOPMENT_HOSTS="dev.orcaspace.woa.com,9.135.99.230,127.0.0.1,localhost"
 export DISCOURSE_DEVELOPER_EMAILS="admin@example.com"
 export DISCOURSE_SERVE_STATIC_ASSETS="true"
@@ -221,7 +221,7 @@ start_ember() {
     
     log_info "启动 Discourse 完整开发环境（Rails + Ember CLI）..."
     log_info "目录: $APP_ROOT"
-    log_info "Ember CLI 端口: 4200"
+    log_info "Ember CLI 端口: 4200（监听 0.0.0.0）"
     log_info "Rails 后端端口: $PORT"
     log_info "环境: $RAILS_ENV"
     log_info "Redis: $DISCOURSE_REDIS_HOST:$DISCOURSE_REDIS_PORT"
@@ -230,7 +230,8 @@ start_ember() {
     echo ""
     
     # 使用 bin/ember-cli -u 同时启动 Unicorn 和 Ember CLI
-    bin/ember-cli -u
+    # 添加 --host 0.0.0.0 让 Ember CLI 监听所有网卡
+    bin/ember-cli -u --host 0.0.0.0
 }
 
 # 启动完整开发环境（Rails + Ember CLI）- 后台
@@ -254,8 +255,8 @@ start_ember_daemon() {
     log_info "日志文件: $EMBER_LOG_FILE"
     echo ""
     
-    # 后台启动，日志写入文件
-    nohup bin/ember-cli -u >> "$EMBER_LOG_FILE" 2>&1 &
+    # 使用 script 命令捕获所有子进程输出（包括 Ember CLI 的编译日志）
+    nohup script -q -c "bin/ember-cli -u --host 0.0.0.0" "$EMBER_LOG_FILE" > /dev/null 2>&1 &
     echo $! > "$EMBER_PID_FILE"
     
     sleep 3
