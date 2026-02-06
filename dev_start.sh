@@ -1,12 +1,13 @@
 #!/bin/bash
 # Discourse 开发模式启动脚本
 # 用法:
-#   ./dev_start.sh          - 启动完整开发环境（端口 4200，支持热重载）
-#   ./dev_start.sh stop     - 停止服务
-#   ./dev_start.sh restart  - 重启服务
-#   ./dev_start.sh status   - 查看状态
-#   ./dev_start.sh logs     - 查看日志
-#   ./dev_start.sh rails    - 仅启动 Rails 后端（端口 3000）
+#   ./dev_start.sh              - 前台启动完整开发环境（端口 4200，支持热重载）
+#   ./dev_start.sh daemon       - 后台启动完整开发环境
+#   ./dev_start.sh stop         - 停止服务
+#   ./dev_start.sh restart      - 重启服务（后台）
+#   ./dev_start.sh status       - 查看状态
+#   ./dev_start.sh logs         - 查看日志
+#   ./dev_start.sh rails        - 仅启动 Rails 后端（端口 3000）
 
 set -e
 
@@ -15,7 +16,9 @@ set -e
 # ========================================
 APP_ROOT="$(cd "$(dirname "$0")" && pwd)"
 PID_FILE="$APP_ROOT/tmp/pids/server.pid"
+EMBER_PID_FILE="$APP_ROOT/tmp/pids/ember-cli.pid"
 LOG_FILE="$APP_ROOT/log/development.log"
+EMBER_LOG_FILE="$APP_ROOT/log/ember-cli.log"
 PORT=3000
 
 # ========================================
@@ -34,7 +37,7 @@ export RACK_ENV="development"
 
 # Discourse 基础配置
 export DISCOURSE_HOSTNAME="dev.orcaspace.woa.com"
-export DISCOURSE_DEV_HOSTS="dev.orcaspace.woa.com,9.135.99.230,127.0.0.1,localhost"
+export RAILS_DEVELOPMENT_HOSTS="dev.orcaspace.woa.com,9.135.99.230,127.0.0.1,localhost"
 export DISCOURSE_DEVELOPER_EMAILS="admin@example.com"
 export DISCOURSE_SERVE_STATIC_ASSETS="true"
 export DISCOURSE_LOG_LEVEL="debug"
@@ -88,6 +91,9 @@ export DISCOURSE_REDIS_SKIP_CLIENT_COMMANDS="true"
 # 设置为 1 允许直接访问 Rails 绕过 Ember CLI 要求（仅用于 API 测试等场景）
 # 如果需要完整的前端开发体验，请使用 ./dev_start.sh ember 启动完整开发环境
 export ALLOW_EMBER_CLI_PROXY_BYPASS="${ALLOW_EMBER_CLI_PROXY_BYPASS:-0}"
+
+# Ember CLI 需要代理到本地 Rails，而不是域名
+export EMBER_CLI_PROXY_HOST="127.0.0.1"
 
 # ========================================
 # 函数定义
@@ -200,26 +206,6 @@ start_daemon() {
     fi
 }
 
-# 查看状态
-show_status() {
-    if is_running; then
-        pid=$(cat "$PID_FILE")
-        log_info "服务运行中 (PID: $pid)"
-        log_info "访问地址: http://$(hostname -I | awk '{print $1}'):$PORT"
-    else
-        log_warn "服务未运行"
-    fi
-}
-
-# 查看日志
-show_logs() {
-    if [ -f "$LOG_FILE" ]; then
-        tail -f "$LOG_FILE"
-    else
-        log_warn "日志文件不存在: $LOG_FILE"
-    fi
-}
-
 # 重启服务
 restart_server() {
     log_info "重启服务..."
@@ -228,17 +214,10 @@ restart_server() {
     start_server
 }
 
-# 后台重启
-restart_daemon() {
-    log_info "后台重启服务..."
-    stop_server
-    sleep 2
-    start_daemon
-}
-
-# 启动完整开发环境（Rails + Ember CLI）
+# 启动完整开发环境（Rails + Ember CLI）- 前台
 start_ember() {
     cd "$APP_ROOT"
+    mkdir -p tmp/pids log
     
     log_info "启动 Discourse 完整开发环境（Rails + Ember CLI）..."
     log_info "目录: $APP_ROOT"
@@ -254,17 +233,115 @@ start_ember() {
     bin/ember-cli -u
 }
 
+# 启动完整开发环境（Rails + Ember CLI）- 后台
+start_ember_daemon() {
+    cd "$APP_ROOT"
+    mkdir -p tmp/pids log
+    
+    # 检查是否已在运行
+    if [ -f "$EMBER_PID_FILE" ]; then
+        pid=$(cat "$EMBER_PID_FILE")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            log_warn "服务已在运行 (PID: $pid)"
+            log_info "日志: tail -f $EMBER_LOG_FILE"
+            return 1
+        fi
+    fi
+    
+    log_info "后台启动 Discourse 完整开发环境..."
+    log_info "Ember CLI 端口: 4200"
+    log_info "Rails 后端端口: $PORT"
+    log_info "日志文件: $EMBER_LOG_FILE"
+    echo ""
+    
+    # 后台启动，日志写入文件
+    nohup bin/ember-cli -u >> "$EMBER_LOG_FILE" 2>&1 &
+    echo $! > "$EMBER_PID_FILE"
+    
+    sleep 3
+    if [ -f "$EMBER_PID_FILE" ] && ps -p $(cat "$EMBER_PID_FILE") > /dev/null 2>&1; then
+        log_info "服务已在后台启动 (PID: $(cat $EMBER_PID_FILE))"
+        log_info "访问地址: http://$DISCOURSE_HOSTNAME:4200"
+        log_info "查看日志: ./dev_start.sh logs"
+        log_info "或: tail -f $EMBER_LOG_FILE"
+    else
+        log_error "启动失败，请检查日志: $EMBER_LOG_FILE"
+        rm -f "$EMBER_PID_FILE"
+        return 1
+    fi
+}
+
 # 停止所有开发服务
 stop_all() {
     log_info "停止所有开发服务..."
+    
+    # 停止 Ember CLI 主进程
+    if [ -f "$EMBER_PID_FILE" ]; then
+        pid=$(cat "$EMBER_PID_FILE")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            log_info "停止 Ember CLI (PID: $pid)..."
+            kill -TERM "$pid" 2>/dev/null || true
+            sleep 2
+            if ps -p "$pid" > /dev/null 2>&1; then
+                kill -9 "$pid" 2>/dev/null || true
+            fi
+        fi
+        rm -f "$EMBER_PID_FILE"
+    fi
+    
     stop_server
     
     # 停止 Ember CLI 相关进程
     pkill -f "ember.*server" 2>/dev/null || true
     pkill -f "pnpm.*ember" 2>/dev/null || true
-    pkill -f "unicorn" 2>/dev/null || true
+    pkill -f "unicorn.*discourse" 2>/dev/null || true
+    pkill -f "ember-tsc" 2>/dev/null || true
     
     log_info "所有服务已停止"
+}
+
+# 查看状态（更新版）
+show_status() {
+    echo ""
+    # 检查 Ember CLI 进程
+    if [ -f "$EMBER_PID_FILE" ]; then
+        pid=$(cat "$EMBER_PID_FILE")
+        if ps -p "$pid" > /dev/null 2>&1; then
+            log_info "Ember CLI 运行中 (PID: $pid)"
+            log_info "访问地址: http://$DISCOURSE_HOSTNAME:4200"
+        else
+            log_warn "Ember CLI PID 文件存在但进程未运行"
+            rm -f "$EMBER_PID_FILE"
+        fi
+    else
+        # 检查是否有相关进程在运行
+        if pgrep -f "ember.*server" > /dev/null 2>&1; then
+            log_info "Ember CLI 运行中（前台模式）"
+            log_info "访问地址: http://$DISCOURSE_HOSTNAME:4200"
+        else
+            log_warn "Ember CLI 未运行"
+        fi
+    fi
+    
+    # 检查 Unicorn 进程
+    if pgrep -f "unicorn.*master" > /dev/null 2>&1; then
+        log_info "Unicorn 运行中"
+    fi
+    echo ""
+}
+
+# 查看日志
+show_logs() {
+    if [ -f "$EMBER_LOG_FILE" ]; then
+        log_info "查看日志: $EMBER_LOG_FILE"
+        tail -f "$EMBER_LOG_FILE"
+    elif [ -f "$LOG_FILE" ]; then
+        log_info "查看日志: $LOG_FILE"
+        tail -f "$LOG_FILE"
+    else
+        log_warn "日志文件不存在"
+        log_info "尝试查看: $EMBER_LOG_FILE 或 $LOG_FILE"
+    fi
 }
 
 # ========================================
@@ -273,8 +350,12 @@ stop_all() {
 
 case "${1:-start}" in
     start)
-        # 默认启动完整开发环境，支持热重载
+        # 前台启动完整开发环境，支持热重载
         start_ember
+        ;;
+    daemon)
+        # 后台启动完整开发环境
+        start_ember_daemon
         ;;
     stop)
         stop_all
@@ -282,7 +363,7 @@ case "${1:-start}" in
     restart)
         stop_all
         sleep 2
-        start_ember
+        start_ember_daemon
         ;;
     status)
         show_status
@@ -296,16 +377,19 @@ case "${1:-start}" in
         start_server
         ;;
     *)
-        echo "用法: $0 {start|stop|restart|status|logs|rails}"
+        echo "用法: $0 {start|daemon|stop|restart|status|logs|rails}"
         echo ""
-        echo "  start   - 启动完整开发环境（Rails + Ember CLI，支持热重载）"
+        echo "  start   - 前台启动完整开发环境（Rails + Ember CLI，支持热重载）"
         echo "            访问: http://$DISCOURSE_HOSTNAME:4200"
+        echo "  daemon  - 后台启动完整开发环境"
         echo "  stop    - 停止服务"
-        echo "  restart - 重启服务"
+        echo "  restart - 重启服务（后台）"
         echo "  status  - 查看状态"
         echo "  logs    - 查看日志"
         echo ""
         echo "  rails   - 仅启动 Rails 后端（端口 3000，用于 API 测试）"
+        echo ""
+        echo "日志文件: $EMBER_LOG_FILE"
         exit 1
         ;;
 esac
