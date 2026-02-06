@@ -255,18 +255,40 @@ start_ember_daemon() {
     log_info "日志文件: $EMBER_LOG_FILE"
     echo ""
     
-    # 使用 script 命令捕获所有子进程输出（包括 Ember CLI 的编译日志）
-    nohup script -q -c "bin/ember-cli -u --host 0.0.0.0" "$EMBER_LOG_FILE" > /dev/null 2>&1 &
+    # 清空旧日志
+    > "$EMBER_LOG_FILE"
+    
+    # 使用 unbuffer 或直接重定向来捕获日志
+    # unbuffer 可以禁用输出缓冲，确保实时日志
+    if command -v unbuffer &> /dev/null; then
+        # 如果有 unbuffer（expect 包），使用它来禁用缓冲
+        nohup unbuffer bin/ember-cli -u --host 0.0.0.0 >> "$EMBER_LOG_FILE" 2>&1 &
+    else
+        # 否则使用 stdbuf 来禁用缓冲（大多数 Linux 系统都有）
+        if command -v stdbuf &> /dev/null; then
+            nohup stdbuf -oL -eL bin/ember-cli -u --host 0.0.0.0 >> "$EMBER_LOG_FILE" 2>&1 &
+        else
+            # 最后回退到普通重定向
+            nohup bin/ember-cli -u --host 0.0.0.0 >> "$EMBER_LOG_FILE" 2>&1 &
+        fi
+    fi
     echo $! > "$EMBER_PID_FILE"
     
-    sleep 3
+    log_info "启动中，等待服务就绪..."
+    sleep 5
+    
+    # 检查进程是否还在运行
     if [ -f "$EMBER_PID_FILE" ] && ps -p $(cat "$EMBER_PID_FILE") > /dev/null 2>&1; then
         log_info "服务已在后台启动 (PID: $(cat $EMBER_PID_FILE))"
         log_info "访问地址: http://$DISCOURSE_HOSTNAME:4200"
         log_info "查看日志: ./dev_start.sh logs"
         log_info "或: tail -f $EMBER_LOG_FILE"
+        echo ""
+        log_info "当前日志 (最新 10 行):"
+        tail -10 "$EMBER_LOG_FILE" 2>/dev/null || true
     else
         log_error "启动失败，请检查日志: $EMBER_LOG_FILE"
+        cat "$EMBER_LOG_FILE" 2>/dev/null || true
         rm -f "$EMBER_PID_FILE"
         return 1
     fi
