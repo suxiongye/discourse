@@ -1,11 +1,12 @@
 #!/bin/bash
 # Discourse 开发模式启动脚本
 # 用法:
-#   ./dev_start.sh          - 启动服务
-#   ./dev_start.sh restart  - 重启服务
+#   ./dev_start.sh          - 启动完整开发环境（端口 4200，支持热重载）
 #   ./dev_start.sh stop     - 停止服务
+#   ./dev_start.sh restart  - 重启服务
 #   ./dev_start.sh status   - 查看状态
 #   ./dev_start.sh logs     - 查看日志
+#   ./dev_start.sh rails    - 仅启动 Rails 后端（端口 3000）
 
 set -e
 
@@ -82,6 +83,11 @@ export SECRET_KEY_BASE="production_secret_key_base_min_30_chars_long_replace_thi
 
 # Redis 特殊配置
 export DISCOURSE_REDIS_SKIP_CLIENT_COMMANDS="true"
+
+# Ember CLI 配置
+# 设置为 1 允许直接访问 Rails 绕过 Ember CLI 要求（仅用于 API 测试等场景）
+# 如果需要完整的前端开发体验，请使用 ./dev_start.sh ember 启动完整开发环境
+export ALLOW_EMBER_CLI_PROXY_BYPASS="${ALLOW_EMBER_CLI_PROXY_BYPASS:-0}"
 
 # ========================================
 # 函数定义
@@ -230,25 +236,53 @@ restart_daemon() {
     start_daemon
 }
 
+# 启动完整开发环境（Rails + Ember CLI）
+start_ember() {
+    cd "$APP_ROOT"
+    
+    log_info "启动 Discourse 完整开发环境（Rails + Ember CLI）..."
+    log_info "目录: $APP_ROOT"
+    log_info "Ember CLI 端口: 4200"
+    log_info "Rails 后端端口: $PORT"
+    log_info "环境: $RAILS_ENV"
+    log_info "Redis: $DISCOURSE_REDIS_HOST:$DISCOURSE_REDIS_PORT"
+    echo ""
+    log_info "访问地址: http://$DISCOURSE_HOSTNAME:4200"
+    echo ""
+    
+    # 使用 bin/ember-cli -u 同时启动 Unicorn 和 Ember CLI
+    bin/ember-cli -u
+}
+
+# 停止所有开发服务
+stop_all() {
+    log_info "停止所有开发服务..."
+    stop_server
+    
+    # 停止 Ember CLI 相关进程
+    pkill -f "ember.*server" 2>/dev/null || true
+    pkill -f "pnpm.*ember" 2>/dev/null || true
+    pkill -f "unicorn" 2>/dev/null || true
+    
+    log_info "所有服务已停止"
+}
+
 # ========================================
 # 主逻辑
 # ========================================
 
 case "${1:-start}" in
     start)
-        start_server
-        ;;
-    daemon)
-        start_daemon
+        # 默认启动完整开发环境，支持热重载
+        start_ember
         ;;
     stop)
-        stop_server
+        stop_all
         ;;
     restart)
-        restart_server
-        ;;
-    restartd)
-        restart_daemon
+        stop_all
+        sleep 2
+        start_ember
         ;;
     status)
         show_status
@@ -256,16 +290,22 @@ case "${1:-start}" in
     logs)
         show_logs
         ;;
+    rails)
+        # 仅启动 Rails 后端（绕过 Ember CLI）
+        export ALLOW_EMBER_CLI_PROXY_BYPASS="1"
+        start_server
+        ;;
     *)
-        echo "用法: $0 {start|daemon|stop|restart|restartd|status|logs}"
+        echo "用法: $0 {start|stop|restart|status|logs|rails}"
         echo ""
-        echo "  start    - 前台启动（可看实时日志，Ctrl+C 停止）"
-        echo "  daemon   - 后台启动"
-        echo "  stop     - 停止服务"
-        echo "  restart  - 前台重启"
-        echo "  restartd - 后台重启"
-        echo "  status   - 查看状态"
-        echo "  logs     - 查看日志"
+        echo "  start   - 启动完整开发环境（Rails + Ember CLI，支持热重载）"
+        echo "            访问: http://$DISCOURSE_HOSTNAME:4200"
+        echo "  stop    - 停止服务"
+        echo "  restart - 重启服务"
+        echo "  status  - 查看状态"
+        echo "  logs    - 查看日志"
+        echo ""
+        echo "  rails   - 仅启动 Rails 后端（端口 3000，用于 API 测试）"
         exit 1
         ;;
 esac
