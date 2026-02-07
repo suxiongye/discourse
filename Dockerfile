@@ -47,9 +47,22 @@ RUN if [ -f pnpm-lock.yaml ]; then \
 
 USER root
 
-# 安装调试工具 & 修复 git GnuTLS 不稳定问题（替换为 OpenSSL 版 libcurl）
+# 安装调试工具 & 修复 git GnuTLS 不稳定问题
+# Ubuntu 默认 git 使用 libcurl-gnutls，在腾讯云连接 GitHub 时 TLS 不稳定
+# 从源码编译 git 使其链接 OpenSSL 版 libcurl
 RUN apt-get update && \
-    apt-get install -y tcpdump vim libcurl4 && \
+    apt-get install -y tcpdump vim \
+      libcurl4-openssl-dev libssl-dev libexpat1-dev gettext zlib1g-dev make gcc && \
+    GIT_VER=$(git --version | awk '{print $3}') && \
+    cd /tmp && \
+    curl -fsSL "https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GIT_VER}.tar.gz" -o git.tar.gz && \
+    tar xzf git.tar.gz && \
+    cd "git-${GIT_VER}" && \
+    make prefix=/usr -j$(nproc) NO_TCLTK=1 all && \
+    make prefix=/usr NO_TCLTK=1 install && \
+    cd / && rm -rf /tmp/git* && \
+    apt-get purge -y make gcc libcurl4-openssl-dev libssl-dev libexpat1-dev gettext zlib1g-dev && \
+    apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
