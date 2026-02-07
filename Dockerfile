@@ -49,31 +49,34 @@ USER root
 
 # 安装调试工具 & 修复 git GnuTLS 不稳定问题
 # Ubuntu 默认 git 使用 libcurl-gnutls，在腾讯云连接 GitHub 时 TLS 不稳定
-# 从源码编译 git 使其链接 OpenSSL 版 libcurl
+# 从源码编译 git-remote-http 使其链接 OpenSSL 版 libcurl，然后手动替换
+# (make install 无法覆盖系统包管理的文件，必须手动 cp)
 RUN apt-get update && \
     apt-get install -y tcpdump vim \
       libcurl4-openssl-dev libssl-dev libexpat1-dev gettext zlib1g-dev make gcc pkg-config && \
-    # 确认 curl-config 指向 OpenSSL 版本
-    echo "=== curl-config --libs ===" && curl-config --libs && \
     GIT_VER=$(git --version | awk '{print $3}') && \
     cd /tmp && \
     curl -fsSL "https://mirrors.edge.kernel.org/pub/software/scm/git/git-${GIT_VER}.tar.gz" -o git.tar.gz && \
     tar xzf git.tar.gz && \
     cd "git-${GIT_VER}" && \
-    # 强制使用 OpenSSL 版 curl-config 编译
-    make prefix=/usr CURLDIR=/usr CURL_CONFIG=/usr/bin/curl-config -j$(nproc) NO_TCLTK=1 all && \
-    make prefix=/usr NO_TCLTK=1 install && \
-    # 验证编译结果
-    echo "=== 编译后验证 ===" && ldd /usr/lib/git-core/git-remote-https | grep curl && \
+    make prefix=/usr CURLDIR=/usr CURL_CONFIG=/usr/bin/curl-config -j$(nproc) NO_TCLTK=1 git-remote-http && \
+    # 验证编译产物链接 OpenSSL 版 libcurl
+    echo "=== 编译产物验证 ===" && readelf -d git-remote-http | grep curl && \
+    # 手动替换系统 git-remote-http 并重建符号链接
+    cp git-remote-http /usr/lib/git-core/git-remote-http && \
+    ln -sf git-remote-http /usr/lib/git-core/git-remote-https && \
+    ln -sf git-remote-http /usr/lib/git-core/git-remote-ftp && \
+    ln -sf git-remote-http /usr/lib/git-core/git-remote-ftps && \
+    # 验证安装结果
+    echo "=== 安装后验证 ===" && ldd /usr/lib/git-core/git-remote-https | grep curl && \
     cd / && rm -rf /tmp/git* && \
-    # 清理编译依赖，但保留 libcurl4(openssl) 运行时库
+    # 清理编译依赖，保留 libcurl4(openssl) 运行时库
     apt-get purge -y make gcc libcurl4-openssl-dev libssl-dev libexpat1-dev gettext zlib1g-dev pkg-config && \
-    # 重新安装 OpenSSL 版 libcurl 运行时包（purge dev 包可能连带删除）
     apt-get install -y libcurl4 && \
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
-    # 最终验证
+    # 最终验证（清理后 libcurl 运行时仍在）
     echo "=== 最终验证 ===" && ldd /usr/lib/git-core/git-remote-https | grep curl
 
 # 创建必要目录
