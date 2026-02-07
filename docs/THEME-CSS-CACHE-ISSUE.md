@@ -188,13 +188,62 @@ flowchart TD
 
 ### 问题 #3: 为什么开发环境不受影响？
 
-| 对比项 | 开发环境 | 生产环境（Puma） |
+开发环境通过 `./dev_start.sh daemon` 启动时，实际调用的是 `bin/ember-cli -u`，其中 `-u` 参数会启动 **Unicorn**（`bin/unicorn`），默认 3 个 Worker。**开发环境同样是多 Worker 模式**，但因为用的是 Unicorn（有 `after_fork`），所以不受影响。
+
+| 对比项 | 开发环境 | 生产环境（改前，Puma） |
 |--------|---------|-----------------|
-| **服务器** | `rails server`（单进程） | Puma + `preload_app!` + fork |
-| **Worker 数** | 1 | 4（默认 `NUM_WEBS=4`）|
-| **fork** | 无 | 有，且**缺少 `after_fork`** |
-| **MessageBus** | 单进程内直接通信 | Worker 间通过 Redis ❌（订阅线程死了）|
+| **服务器** | Unicorn（`bin/ember-cli -u` → `bin/unicorn`） | Puma + `preload_app!` + fork |
+| **Worker 数** | 3（默认 `UNICORN_WORKERS` 未设置时） | 4（默认 `NUM_WEBS=4`）|
+| **fork** | 有，**且有 `after_fork`** ✅ | 有，且**缺少 `after_fork`** ❌ |
+| **MessageBus** | Worker 间通过 Redis 正常同步 ✅ | Worker 间通过 Redis ❌（订阅线程死了）|
 | **CSS 浏览器缓存** | `immutable_for(1.second)` | `immutable_for(1.year)` |
+
+### 补充：开发与生产共享数据库但 Redis 独立时的 CSS 缓存问题
+
+当开发环境和生产环境**共用同一个 PostgreSQL 数据库**但使用**各自独立的 Redis** 时，会出现一个容易混淆的现象：在生产环境修改了主题 CSS 后，开发环境的样式不会自动更新。
+
+**原因**：Theme 数据（`themes`、`theme_fields` 表）存在共享数据库中，两边数据是同步的。但 CSS 编译结果缓存在各自的 Redis 里（第 1 层 DistributedCache 通过 MessageBus/Redis 同步），而 `notify_theme_change` 触发的缓存清除消息只会广播到**同一个 Redis 实例**上订阅的 Worker。
+
+```mermaid
+flowchart LR
+    subgraph 共享["🗄️ 共享 PostgreSQL"]
+        DB["themes / theme_fields<br/>两边数据完全一致"]
+    end
+
+    subgraph 生产["🏭 生产环境"]
+        direction TB
+        ProdRedis["Redis A"]
+        ProdWorker["Unicorn Workers"]
+        ProdWorker -->|"MessageBus 订阅"| ProdRedis
+    end
+
+    subgraph 开发["💻 开发环境"]
+        direction TB
+        DevRedis["Redis B"]
+        DevWorker["Unicorn Workers"]
+        DevWorker -->|"MessageBus 订阅"| DevRedis
+    end
+
+    DB --- ProdWorker
+    DB --- DevWorker
+
+    ProdRedis -.->|"❌ 消息不互通"| DevRedis
+
+    style ProdRedis fill:#ffcdd2,stroke:#b71c1c
+    style DevRedis fill:#ffcdd2,stroke:#b71c1c
+    style DB fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+```
+
+**解决办法**：在开发环境的管理后台对主题执行任意操作（如点击"更新"按钮），即可触发 `notify_theme_change` → 清除开发环境 Redis 中的旧缓存 → 重新编译。也可以在 Rails console 中手动清除：
+
+```ruby
+# 方式一：清除样式表缓存
+Stylesheet::Manager.cache.clear
+
+# 方式二：更彻底，清除整个 Redis 缓存
+# 注意：这会清除所有缓存，不仅是 CSS
+`redis-cli FLUSHDB`
+```
 
 ---
 
@@ -479,4 +528,5 @@ app/
 | 问题 | 根因 | 解决方案 | 修复日期 |
 |------|------|----------|----------|
 | 生产主题 CSS 随机新旧交替 | 使用 Puma 作为生产服务器，`config/puma.rb` 缺少 `on_worker_boot { Discourse.after_fork }` 回调。fork 后 Worker 的 MessageBus 订阅线程死亡，DistributedCache 无法跨 Worker 同步，导致部分 Worker 永远返回旧 CSS URL | 改用 Discourse 官方推荐的 Unicorn 服务器，其 `config/unicorn.conf.rb` 已正确配置 `after_fork` 回调 | 2026-02-07 |
-| 开发环境不受影响 | 开发模式 `rails server` 单进程运行，不 fork，不存在 Worker 间同步问题 | — | — |
+| 开发环境不受影响 | 开发模式通过 `bin/ember-cli -u` 启动 Unicorn（3 Worker），`config/unicorn.conf.rb` 有 `after_fork` 回调，MessageBus 订阅正常 | — | — |
+| 生产改主题后开发环境 CSS 未更新 | 开发和生产共享数据库但 Redis 独立，`notify_theme_change` 的 MessageBus 消息只在同一个 Redis 实例内传播，开发环境的 Redis 缓存未被清除 | 在开发环境管理后台对主题执行任意操作触发缓存刷新，或手动执行 `Stylesheet::Manager.cache.clear` | — |

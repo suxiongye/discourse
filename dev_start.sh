@@ -65,6 +65,7 @@ export DISCOURSE_COOKIE_DOMAIN=""
 export DISCOURSE_TRUSTED_PROXIES="10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
 
 # 超时配置
+export UNICORN_WORKERS="2"
 export UNICORN_TIMEOUT="180"
 export DISCOURSE_REQUEST_TIMEOUT="180"
 export DISCOURSE_GIT_TIMEOUT="300"
@@ -89,6 +90,8 @@ export SECRET_KEY_BASE="production_secret_key_base_min_30_chars_long_replace_thi
 export DISCOURSE_REDIS_SKIP_CLIENT_COMMANDS="true"
 
 # Ember CLI 配置
+# TypeScript 编译需要约 1.5GB 堆内存，设置 2GB 留余量
+export NODE_OPTIONS="--max-old-space-size=2048"
 # 设置为 1 允许直接访问 Rails 绕过 Ember CLI 要求（仅用于 API 测试等场景）
 # 如果需要完整的前端开发体验，请使用 ./dev_start.sh ember 启动完整开发环境
 export ALLOW_EMBER_CLI_PROXY_BYPASS="${ALLOW_EMBER_CLI_PROXY_BYPASS:-0}"
