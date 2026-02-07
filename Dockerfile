@@ -47,9 +47,9 @@ RUN if [ -f pnpm-lock.yaml ]; then \
 
 USER root
 
-# 安装调试工具
+# 安装调试工具 & 修复 git GnuTLS 不稳定问题（替换为 OpenSSL 版 libcurl）
 RUN apt-get update && \
-    apt-get install -y tcpdump vim && \
+    apt-get install -y tcpdump vim libcurl4 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
