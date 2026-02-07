@@ -40,7 +40,8 @@ export DISCOURSE_HOSTNAME="127.0.0.1"
 export RAILS_DEVELOPMENT_HOSTS="dev.orcaspace.woa.com,9.135.99.230,127.0.0.1,localhost"
 export DISCOURSE_DEVELOPER_EMAILS="admin@example.com"
 export DISCOURSE_SERVE_STATIC_ASSETS="true"
-export DISCOURSE_LOG_LEVEL="debug"
+# 日志级别: debug, info, warn, error (推荐 info 或 warn)
+export DISCOURSE_DEV_LOG_LEVEL="warn"
 export DISCOURSE_SHOW_ERRORS="true"
 
 # HTTPS/SSL 配置（Nginx 代理 HTTPS，Rails 需要知道）

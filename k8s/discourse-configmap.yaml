@@ -43,6 +43,9 @@ data:
   DISCOURSE_S3_ENDPOINT: "https://cos.ap-guangzhou.myqcloud.com"
  # Git 和请求超时配置
   UNICORN_TIMEOUT: "180"
+  UNICORN_WORKERS: "4"
+  UNICORN_BIND_ALL: "true"
+  UNICORN_PORT: "3000"
   DISCOURSE_REQUEST_TIMEOUT: "180"
   DISCOURSE_GIT_TIMEOUT: "300"
   # 限流配置 - 禁用或放宽限流

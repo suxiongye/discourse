@@ -43,11 +43,7 @@ RUN if [ -f pnpm-lock.yaml ]; then \
         yarn install --frozen-lockfile && yarn cache clean; \
     fi
 
-# 修复配置文件路径
-RUN if [ -f config/puma.rb ]; then \
-        sed -i 's|/home/discourse/discourse|/var/www/discourse|g' config/puma.rb && \
-        sed -i 's|bind.*unix://.*|bind "tcp://0.0.0.0:3000"|g' config/puma.rb; \
-    fi
+# Unicorn 不需要修复路径，它通过 discourse_path 自动检测
 
 USER root
 
@@ -75,11 +71,11 @@ USER discourse
 ENV RUBYOPT=""
 ENV DISCOURSE_DOWNLOAD_PRE_BUILT_ASSETS=0
 
-# 启动时检查并预编译 assets
+# 启动时检查并预编译 assets，然后启动 Unicorn
 CMD ["/bin/bash", "-c", "\
     if [ ! -f /var/www/discourse/tmp/asset-processor.js ]; then \
         echo '📦 Precompiling assets...' && \
         bundle exec rake assets:precompile; \
     fi && \
-    echo '🚀 Starting Puma...' && \
-    bundle exec puma -C config/puma.rb"]
+    echo '🚀 Starting Unicorn...' && \
+    bundle exec unicorn -c config/unicorn.conf.rb"]
